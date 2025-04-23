@@ -1,106 +1,120 @@
-import React, { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
-import { Textarea } from "@/components/ui/textarea";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SMART Audit Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f5f5f5; }
+    .card { background: white; padding: 16px; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    input { padding: 8px; margin: 4px 0; width: 100%; border-radius: 6px; border: 1px solid #ccc; }
+    button { padding: 8px 16px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; }
+  </style>
+</head>
+<body>
 
-export default function DashboardAudit() {
-  const [data, setData] = useState([
-    { akun: "Belanja Barang", anggaran: 3000000, realisasi: 2500000 },
-    { akun: "PAD Retribusi", anggaran: 2000000, realisasi: 3000000 }
-  ]);
+  <h1>SMART Audit Dashboard</h1>
 
-  const [form, setForm] = useState({ akun: "", anggaran: 0, realisasi: 0 });
+  <div class="card">
+    <canvas id="barChart"></canvas>
+  </div>
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
-  };
+  <div class="card">
+    <h2>Tambah Transaksi</h2>
+    <input type="text" id="akun" placeholder="Nama Akun"/>
+    <input type="number" id="anggaran" placeholder="Anggaran"/>
+    <input type="number" id="realisasi" placeholder="Realisasi"/>
+    <button onclick="tambahData()">Tambah</button>
+  </div>
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const newEntry = {
-      akun: form.akun,
-      anggaran: parseFloat(form.anggaran),
-      realisasi: parseFloat(form.realisasi)
-    };
-    setData([...data, newEntry]);
-    setForm({ akun: "", anggaran: 0, realisasi: 0 });
-  };
-
-  const generatePDF = () => {
-    const doc = new jsPDF();
-    doc.text("Laporan Serapan Anggaran", 14, 16);
-    const tableData = data.map(item => {
-      const persentase = ((item.realisasi / item.anggaran) * 100).toFixed(1);
-      let status = "Kurang Efisien";
-      if (persentase > 100) status = "Over Budget";
-      else if (persentase > 80) status = "Optimal";
-      return [item.akun, item.anggaran, item.realisasi, `${persentase}%`, status];
-    });
-    autoTable(doc, {
-      head: [["Akun", "Anggaran", "Realisasi", "% Serapan", "Status"]],
-      body: tableData,
-    });
-    doc.save("laporan-serapan-anggaran.pdf");
-  };
-
-  return (
-    <div className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <Card className="col-span-2">
-        <CardContent>
-          <h2 className="text-xl font-bold mb-2">Dashboard Serapan Anggaran</h2>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={data}>
-              <XAxis dataKey="akun" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="anggaran" fill="#8884d8" name="Anggaran" />
-              <Bar dataKey="realisasi" fill="#82ca9d" name="Realisasi" />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent>
-          <h2 className="text-xl font-bold mb-2">Tambah Transaksi</h2>
-          <form className="space-y-2" onSubmit={handleSubmit}>
-            <Input name="akun" value={form.akun} onChange={handleChange} placeholder="Kode/Nama Akun" required />
-            <Input name="anggaran" value={form.anggaran} onChange={handleChange} placeholder="Anggaran" type="number" required />
-            <Input name="realisasi" value={form.realisasi} onChange={handleChange} placeholder="Realisasi" type="number" required />
-            <Button type="submit">Tambah</Button>
-          </form>
-        </CardContent>
-      </Card>
-
-      <Card className="col-span-3">
-        <CardContent>
-          <div className="flex justify-between items-center mb-2">
-            <h2 className="text-xl font-bold">Audit Catatan AI (Simulasi)</h2>
-            <Button onClick={generatePDF}>Export PDF</Button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {data.map((item, index) => {
-              const persentase = (item.realisasi / item.anggaran) * 100;
-              let status = "Kurang Efisien";
-              if (persentase > 100) status = "Over Budget";
-              else if (persentase > 80) status = "Optimal";
-              return (
-                <div key={index} className="p-2 border rounded-xl bg-gray-50 shadow-sm">
-                  <p><strong>{item.akun}</strong></p>
-                  <p>Serapan: {persentase.toFixed(1)}%</p>
-                  <p>Status: <span className="font-semibold">{status}</span></p>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h2>Audit Catatan AI</h2>
+      <button onclick="exportPDF()">Export PDF</button>
     </div>
-  );
-}
+    <div id="summaryContainer"></div>
+  </div>
+
+  <script>
+    let data = [
+      { akun: "Belanja Barang", anggaran: 3000000, realisasi: 2500000 },
+      { akun: "PAD Retribusi", anggaran: 2000000, realisasi: 3000000 }
+    ];
+
+    const ctx = document.getElementById('barChart').getContext('2d');
+    let chart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: data.map(d => d.akun),
+        datasets: [
+          {
+            label: 'Anggaran',
+            backgroundColor: '#8884d8',
+            data: data.map(d => d.anggaran)
+          },
+          {
+            label: 'Realisasi',
+            backgroundColor: '#82ca9d',
+            data: data.map(d => d.realisasi)
+          }
+        ]
+      }
+    });
+
+    function tambahData() {
+      const akun = document.getElementById("akun").value;
+      const anggaran = parseFloat(document.getElementById("anggaran").value);
+      const realisasi = parseFloat(document.getElementById("realisasi").value);
+      data.push({ akun, anggaran, realisasi });
+      updateChart();
+      updateSummary();
+    }
+
+    function updateChart() {
+      chart.data.labels = data.map(d => d.akun);
+      chart.data.datasets[0].data = data.map(d => d.anggaran);
+      chart.data.datasets[1].data = data.map(d => d.realisasi);
+      chart.update();
+    }
+
+    function updateSummary() {
+      const container = document.getElementById("summaryContainer");
+      container.innerHTML = "";
+      data.forEach(item => {
+        const persentase = (item.realisasi / item.anggaran) * 100;
+        let status = "Kurang Efisien";
+        if (persentase > 100) status = "Over Budget";
+        else if (persentase > 80) status = "Optimal";
+        container.innerHTML += `
+          <div style="border:1px solid #ddd; border-radius:8px; padding:8px; margin-top:8px;">
+            <strong>${item.akun}</strong><br/>
+            Serapan: ${persentase.toFixed(1)}%<br/>
+            Status: <strong>${status}</strong>
+          </div>
+        `;
+      });
+    }
+
+    function exportPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.text("Laporan Serapan Anggaran", 14, 16);
+      let startY = 24;
+      data.forEach(item => {
+        const persentase = (item.realisasi / item.anggaran * 100).toFixed(1);
+        let status = "Kurang Efisien";
+        if (persentase > 100) status = "Over Budget";
+        else if (persentase > 80) status = "Optimal";
+        doc.text(`• ${item.akun}: Rp${item.realisasi} dari Rp${item.anggaran} (${persentase}%) → ${status}`, 14, startY);
+        startY += 8;
+      });
+      doc.save("laporan-serapan.pdf");
+    }
+
+    updateSummary();
+  </script>
+
+</body>
+</html>
